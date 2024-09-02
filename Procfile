@@ -1,1 +1,1 @@
-web: uvicorn mslu_ical:app --workers 4
+web: uvicorn mslu_ical:app --workers 4 --port $PORT
