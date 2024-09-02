@@ -9,6 +9,7 @@ fastapi = {extras = ["standard"], version = "*"}
 aiohttp = "*"
 uvicorn = "*"
 jinja2 = "*"
+fake-useragent = "*"
 
 [dev-packages]
 

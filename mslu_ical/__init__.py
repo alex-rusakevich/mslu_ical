@@ -5,6 +5,7 @@ from itertools import chain
 from logging import getLogger
 
 import aiohttp
+from fake_useragent import UserAgent
 from fastapi import FastAPI, Response
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
@@ -13,6 +14,7 @@ from ical.calendar_stream import IcsCalendarStream
 from ical.event import Event
 
 logger = getLogger("uvicorn.error")
+ua = UserAgent()
 app = FastAPI()
 
 
@@ -37,7 +39,7 @@ async def get_groups_list(faculty_id: int, education_form: int):
         query = f"http://schedule.mslu.by/backend/buttonClicked?facultyId={faculty_id}&educationForm={education_form}"
         logger.debug(query)
 
-        async with session.get(query) as resp:
+        async with session.get(query, headers={"User-Agent": ua.random}) as resp:
             status_code = resp.status
             body = await resp.json()
 
@@ -47,7 +49,9 @@ async def get_groups_list(faculty_id: int, education_form: int):
 @app.get("/api/ical/{group_id}/")
 async def get_ical_for_group(group_id: int):
     async def get_url_data(url, session):
-        r = await session.request("GET", url=f"{url}")
+        r = await session.request(
+            "GET", url=f"{url}", headers={"User-Agent": ua.random}
+        )
         data = await r.json()
         return data["data"]
 
