@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 from ical.calendar import Calendar
 from ical.calendar_stream import IcsCalendarStream
 from ical.event import Event
-from ical.timezone import Timezone
+from pytz import timezone
 
 logger = getLogger("uvicorn.error")
 ua = UserAgent()
@@ -94,23 +94,27 @@ async def get_ical_for_group(group_id: int):
 
     lessons = list(chain(*results))
     calendar = Calendar()
-    calendar.timezones = [Timezone.from_tzif("Europe/Minsk")]
+    bel_tz = timezone("Europe/Minsk")
 
     for lesson in lessons:
         calendar.events.append(
             Event(
                 summary=lesson["Discipline"] + f" ({lesson['Discipline_Type']})",
-                start=datetime.datetime.strptime(
-                    lesson["lessonDay"]
-                    + " "
-                    + lesson["TimeIn"].replace(":00.0000000", ""),
-                    "%Y-%d-%m %H:%M",
+                start=bel_tz.localize(
+                    datetime.datetime.strptime(
+                        lesson["lessonDay"]
+                        + " "
+                        + lesson["TimeIn"].replace(":00.0000000", ""),
+                        "%Y-%d-%m %H:%M",
+                    )
                 ),
-                end=datetime.datetime.strptime(
-                    lesson["lessonDay"]
-                    + " "
-                    + lesson["TimeOut"].replace(":00.0000000", ""),
-                    "%Y-%d-%m %H:%M",
+                end=bel_tz.localize(
+                    datetime.datetime.strptime(
+                        lesson["lessonDay"]
+                        + " "
+                        + lesson["TimeOut"].replace(":00.0000000", ""),
+                        "%Y-%d-%m %H:%M",
+                    )
                 ),
                 location=lesson["Classroom"],
                 description="Преподаватель: " + lesson["FIO_teacher"],
