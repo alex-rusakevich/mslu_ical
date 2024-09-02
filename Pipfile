@@ -1,0 +1,16 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+ical = "*"
+fastapi = {extras = ["standard"], version = "*"}
+aiohttp = "*"
+uvicorn = "*"
+jinja2 = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.11"

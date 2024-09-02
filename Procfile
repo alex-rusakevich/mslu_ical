@@ -1,0 +1,1 @@
+web: uvicorn mslu_ical:app --workers 4
