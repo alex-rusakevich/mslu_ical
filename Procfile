@@ -1,1 +1,1 @@
-web: uvicorn mslu_ical:app --workers 4 --port $PORT
+web: uvicorn mslu_ical:app --host=0.0.0.0 --port=${PORT}
