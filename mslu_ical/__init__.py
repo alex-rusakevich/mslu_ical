@@ -46,7 +46,7 @@ async def get_groups_list(faculty_id: int, education_form: int):
             return JSONResponse(content=jsonable_encoder(body), status_code=status_code)
 
 
-@app.get("/api/ical/{group_id}/")
+@app.get("/api/ical/{group_id}/uni_lessons.ics")
 async def get_ical_for_group(group_id: int):
     async def get_url_data(url, session):
         r = await session.request(
