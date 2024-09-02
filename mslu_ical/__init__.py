@@ -121,14 +121,4 @@ async def get_ical_for_group(group_id: int):
     calendar_text.write(IcsCalendarStream.calendar_to_ics(calendar))
     calendar_text = calendar_text.getvalue()
 
-    calendar_text = calendar_text.replace(
-        "VERSION:2.0",
-        """
-VERSION:2.0
-CALSCALE:GREGORIAN
-X-WR-CALNAME:Занятия в университете
-X-WR-TIMEZONE:Europe/Minsk
-""".strip(),
-    )
-
     return Response(content=calendar_text, media_type="text/calendar")
