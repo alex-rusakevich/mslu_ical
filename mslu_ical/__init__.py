@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse
 from ical.calendar import Calendar
 from ical.calendar_stream import IcsCalendarStream
 from ical.event import Event
+from ical.timezone import Timezone
 
 logger = getLogger("uvicorn.error")
 ua = UserAgent()
@@ -93,6 +94,7 @@ async def get_ical_for_group(group_id: int):
 
     lessons = list(chain(*results))
     calendar = Calendar()
+    calendar.timezones = [Timezone.from_tzif("Europe/Minsk")]
 
     for lesson in lessons:
         calendar.events.append(
