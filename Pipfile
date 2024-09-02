@@ -10,6 +10,7 @@ aiohttp = "*"
 uvicorn = "*"
 jinja2 = "*"
 fake-useragent = "*"
+pytz = "*"
 
 [dev-packages]
 
