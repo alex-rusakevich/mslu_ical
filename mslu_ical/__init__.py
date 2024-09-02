@@ -48,12 +48,34 @@ async def get_groups_list(faculty_id: int, education_form: int):
 
 @app.get("/api/ical/{group_id}/uni_lessons.ics")
 async def get_ical_for_group(group_id: int):
-    async def get_url_data(url, session):
+    async def get_url_data(url, session, week_type: str):
         r = await session.request(
             "GET", url=f"{url}", headers={"User-Agent": ua.random}
         )
+
         data = await r.json()
-        return data["data"]
+
+        week_first_day = datetime.datetime.today() - datetime.timedelta(
+            days=datetime.datetime.today().weekday() % 7
+        )
+
+        if week_type.startswith("current"):
+            ...
+        elif week_type.startswith("next"):
+            week_first_day += datetime.timedelta(days=7)
+        elif week_type.startswith("third"):
+            week_first_day += datetime.timedelta(days=7 * 2)
+        elif week_type.startswith("fourth"):
+            week_first_day += datetime.timedelta(days=7 * 3)
+
+        data = data["data"]
+
+        for i, _ in enumerate(data):
+            data[i]["lessonDay"] = (
+                week_first_day + datetime.timedelta(days=(data[i]["DayNumber"] - 1))
+            ).strftime("%Y-%d-%m")
+
+        return data
 
     async with aiohttp.ClientSession() as session:
         tasks = []
@@ -63,6 +85,7 @@ async def get_ical_for_group(group_id: int):
                 get_url_data(
                     f"http://schedule.mslu.by/backend/?groupId={group_id}&weekType={week_type}",
                     session=session,
+                    week_type=week_type,
                 )
             )
 
@@ -76,16 +99,16 @@ async def get_ical_for_group(group_id: int):
             Event(
                 summary=lesson["Discipline"] + f" ({lesson['Discipline_Type']})",
                 start=datetime.datetime.strptime(
-                    lesson["DateIn"]
+                    lesson["lessonDay"]
                     + " "
                     + lesson["TimeIn"].replace(":00.0000000", ""),
-                    "%Y-%m-%d %H:%M",
+                    "%Y-%d-%m %H:%M",
                 ),
                 end=datetime.datetime.strptime(
-                    lesson["DateOut"]
+                    lesson["lessonDay"]
                     + " "
                     + lesson["TimeOut"].replace(":00.0000000", ""),
-                    "%Y-%m-%d %H:%M",
+                    "%Y-%d-%m %H:%M",
                 ),
                 location=lesson["Classroom"],
                 description="Преподаватель: " + lesson["FIO_teacher"],
