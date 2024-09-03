@@ -1,12 +1,12 @@
 import asyncio
 import datetime
+import json
 from io import StringIO
 from itertools import chain
 from logging import getLogger
 from typing import Union
 
 import aiohttp
-from fake_useragent import UserAgent
 from fastapi import FastAPI, Response
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
@@ -15,8 +15,9 @@ from ical.calendar_stream import IcsCalendarStream
 from ical.event import Event
 from pytz import timezone
 
+from mslu_ical.network import get_url_data, ua
+
 logger = getLogger("uvicorn.error")
-ua = UserAgent()
 app = FastAPI()
 
 
@@ -48,37 +49,8 @@ async def get_groups_list(faculty_id: int, education_form: int):
             return JSONResponse(content=jsonable_encoder(body), status_code=status_code)
 
 
-@app.get("/api/ical/{group_id}/uni_lessons.ics")
+@app.get("/api/ical/student_group/{group_id}/uni_lessons.ics")
 async def get_ical_for_group(group_id: int, title_prefix: Union[str, None] = None):
-    async def get_url_data(url, session, week_type: str):
-        r = await session.request(
-            "GET", url=f"{url}", headers={"User-Agent": ua.random}
-        )
-
-        data = await r.json()
-
-        week_first_day = datetime.datetime.today() - datetime.timedelta(
-            days=datetime.datetime.today().weekday() % 7
-        )
-
-        if week_type.startswith("current"):
-            ...
-        elif week_type.startswith("next"):
-            week_first_day += datetime.timedelta(days=7)
-        elif week_type.startswith("third"):
-            week_first_day += datetime.timedelta(days=7 * 2)
-        elif week_type.startswith("fourth"):
-            week_first_day += datetime.timedelta(days=7 * 3)
-
-        data = data["data"]
-
-        for i, _ in enumerate(data):
-            data[i]["lessonDay"] = (
-                week_first_day + datetime.timedelta(days=(data[i]["DayNumber"] - 1))
-            ).strftime("%Y-%d-%m")
-
-        return data
-
     async with aiohttp.ClientSession() as session:
         tasks = []
 
@@ -126,6 +98,98 @@ async def get_ical_for_group(group_id: int, title_prefix: Union[str, None] = Non
                 description="Преподаватель: " + lesson["FIO_teacher"],
             )
         )
+
+    calendar_text = StringIO()
+    calendar_text.write(IcsCalendarStream.calendar_to_ics(calendar))
+    calendar_text = calendar_text.getvalue()
+
+    return Response(content=calendar_text, media_type="text/calendar")
+
+
+@app.get("/api/ical/teacher/{teacher_id}/uni_lessons.ics")
+async def get_ical_for_teacher(teacher_id: int, title_prefix: Union[str, None] = None):
+    async with aiohttp.ClientSession() as session:
+        tasks = []
+
+        for week_type in WEEK_TYPES:
+            tasks.append(
+                get_url_data(
+                    f"http://schedule.mslu.by/backend/teachers?teacherId={teacher_id}&weekType={week_type}",
+                    session=session,
+                    week_type=week_type,
+                )
+            )
+
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    lessons = list(chain(*results))
+    calendar = Calendar()
+    bel_tz = timezone("Europe/Minsk")
+
+    if not title_prefix:
+        title_prefix = ""
+
+    lessons_by_hash = {}
+
+    # Find duplicates
+    for lesson in lessons:
+        id_obj = {}
+
+        for key in (
+            "Discipline",
+            "Discipline_Type",
+            "lessonDay",
+            "TimeIn",
+            "TimeOut",
+            "Classroom",
+        ):
+            id_obj[key] = lesson[key]
+
+        unique_repr = hash(json.dumps(id_obj, sort_keys=True))
+
+        lesson["GroupList"] = [lesson["Group"]]
+
+        if lessons_by_hash.get(unique_repr):
+            lessons_by_hash[unique_repr]["GroupList"].append(lesson["Group"])
+        else:
+            lessons_by_hash[unique_repr] = lesson
+
+    lessons = lessons_by_hash.values()
+
+    for lesson in lessons:
+        description = ""
+
+        if len(lesson["GroupList"]) > 1:
+            description = "Группы: " + ", ".join(lesson["GroupList"])
+        else:
+            description = "Группа: " + lesson["Group"]
+
+        event = Event(
+            summary=title_prefix
+            + lesson["Discipline"]
+            + f" ({lesson['Discipline_Type']})",
+            start=bel_tz.localize(
+                datetime.datetime.strptime(
+                    lesson["lessonDay"]
+                    + " "
+                    + lesson["TimeIn"].replace(":00.0000000", ""),
+                    "%Y-%d-%m %H:%M",
+                )
+            ),
+            end=bel_tz.localize(
+                datetime.datetime.strptime(
+                    lesson["lessonDay"]
+                    + " "
+                    + lesson["TimeOut"].replace(":00.0000000", ""),
+                    "%Y-%d-%m %H:%M",
+                )
+            ),
+            location=lesson["Classroom"],
+            description=description,
+        )
+
+        calendar.events.append(event)
+    # endregion
 
     calendar_text = StringIO()
     calendar_text.write(IcsCalendarStream.calendar_to_ics(calendar))
