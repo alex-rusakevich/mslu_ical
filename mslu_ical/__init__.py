@@ -49,7 +49,20 @@ async def get_groups_list(faculty_id: int, education_form: int):
             return JSONResponse(content=jsonable_encoder(body), status_code=status_code)
 
 
-@app.get("/api/ical/student_group/{group_id}/uni_lessons.ics")
+@app.get("/api/teachers/")
+async def get_teachers_list():
+    async with aiohttp.ClientSession() as session:
+        query = "http://schedule.mslu.by/backend/getTeacherNames"
+        logger.debug(query)
+
+        async with session.get(query, headers={"User-Agent": ua.random}) as resp:
+            status_code = resp.status
+            body = await resp.json()
+
+            return JSONResponse(content=jsonable_encoder(body), status_code=status_code)
+
+
+@app.get("/api/ical/students/{group_id}/uni_lessons.ics")
 async def get_ical_for_group(group_id: int, title_prefix: Union[str, None] = None):
     async with aiohttp.ClientSession() as session:
         tasks = []
