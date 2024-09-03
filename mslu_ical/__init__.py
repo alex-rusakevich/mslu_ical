@@ -3,6 +3,7 @@ import datetime
 from io import StringIO
 from itertools import chain
 from logging import getLogger
+from typing import Union
 
 import aiohttp
 from fake_useragent import UserAgent
@@ -48,7 +49,7 @@ async def get_groups_list(faculty_id: int, education_form: int):
 
 
 @app.get("/api/ical/{group_id}/uni_lessons.ics")
-async def get_ical_for_group(group_id: int):
+async def get_ical_for_group(group_id: int, title_prefix: Union[str, None] = None):
     async def get_url_data(url, session, week_type: str):
         r = await session.request(
             "GET", url=f"{url}", headers={"User-Agent": ua.random}
@@ -96,10 +97,15 @@ async def get_ical_for_group(group_id: int):
     calendar = Calendar()
     bel_tz = timezone("Europe/Minsk")
 
+    if not title_prefix:
+        title_prefix = ""
+
     for lesson in lessons:
         calendar.events.append(
             Event(
-                summary=lesson["Discipline"] + f" ({lesson['Discipline_Type']})",
+                summary=title_prefix
+                + lesson["Discipline"]
+                + f" ({lesson['Discipline_Type']})",
                 start=bel_tz.localize(
                     datetime.datetime.strptime(
                         lesson["lessonDay"]
