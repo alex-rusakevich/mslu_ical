@@ -209,3 +209,8 @@ async def get_ical_for_teacher(teacher_id: int, title_prefix: Union[str, None] =
     calendar_text = calendar_text.getvalue()
 
     return Response(content=calendar_text, media_type="text/calendar")
+
+
+@app.get("/api/health")
+async def get_health_state():
+    return JSONResponse(content=jsonable_encoder({"status": "ok"}), status_code=200)
