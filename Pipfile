@@ -11,6 +11,7 @@ uvicorn = "*"
 jinja2 = "*"
 fake-useragent = "*"
 pytz = "*"
+a2wsgi = "*"
 
 [dev-packages]
 

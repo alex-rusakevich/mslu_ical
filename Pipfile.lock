@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "6810d172de2eac43595a40ffc43db93bbae3f388a728c755cc4b8d64adaa30e8"
+            "sha256": "cb692a83018cf9d3f8c3fc0b13f79fdba648bada696ad18b93e653bd4336e4d9"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -16,6 +16,15 @@
         ]
     },
     "default": {
+        "a2wsgi": {
+            "hashes": [
+                "sha256:6d7c602fb1f9cc6afc6c6d0558d3354f3c7aa281e73e6dc9e001dbfc1d9e80cf",
+                "sha256:ce462ff7e1daac0bc57183c6f800f09a71c2a7a98ddd5cdeca149e3eabf3338e"
+            ],
+            "index": "pypi",
+            "markers": "python_full_version >= '3.8.0'",
+            "version": "==1.10.7"
+        },
         "aiohappyeyeballs": {
             "hashes": [
                 "sha256:55a1714f084e63d49639800f95716da97a1f173d46a16dfcfda0016abb93b6b2",
