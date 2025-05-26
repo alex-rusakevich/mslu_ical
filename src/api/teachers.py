@@ -6,8 +6,7 @@ from itertools import chain
 from logging import getLogger
 from typing import Any, Union, cast
 
-import aiohttp
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Depends, Response
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from ical.calendar import Calendar
@@ -15,30 +14,30 @@ from ical.calendar_stream import IcsCalendarStream
 from ical.event import Event
 from pytz import timezone
 
-from src.config.settings import settings
-from src.network import get_url_data, ua
+from src.utils.constants import WEEK_TYPES
+from src.utils.fake_ua_client import get_http_session
+from src.utils.schedules import get_schedule_with_dates, ua
 
 logger = getLogger("uvicorn.error")
 router = APIRouter()
 
 
-@router.get("/", description="Get the list of all MSLU teachers")
-async def get_teachers_list():
+@router.get("/")
+async def get_teachers_list(session = Depends(get_http_session)):
     """Get list of MSLU teachers"""
     
-    async with aiohttp.ClientSession() as session:
-        query = "http://schedule.mslu.by/backend/getTeacherNames"
-        logger.debug(query)
+    query = "http://schedule.mslu.by/backend/getTeacherNames"
+    logger.debug(query)
 
-        async with session.get(query, headers={"User-Agent": ua.random}) as resp:
-            status_code = resp.status
-            body = await resp.json()
+    async with session.get(query, headers={"User-Agent": ua.random}) as resp:
+        status_code = resp.status
+        body = await resp.json()
 
-            return JSONResponse(content=jsonable_encoder(body), status_code=status_code)
+        return JSONResponse(content=jsonable_encoder(body), status_code=status_code)
 
 
-@router.get("/{teacher_id}/uni_lessons.ics", description="Get schedule for a teacher by their ID")
-async def get_ical_for_teacher(teacher_id: int, title_prefix: Union[str, None] = None):
+@router.get("/{teacher_id}/uni_lessons.ics")
+async def get_ical_for_teacher(teacher_id: int, title_prefix: Union[str, None] = None, session = Depends(get_http_session)):
     """Get schedule for a group by its ID
     
     - **teacher_id**: teacher ID
@@ -46,19 +45,18 @@ async def get_ical_for_teacher(teacher_id: int, title_prefix: Union[str, None] =
     Don't forget the space in order to separate your emoji and the rest of the title
     """
 
-    async with aiohttp.ClientSession() as session:
-        tasks = []
+    tasks = []
 
-        for week_type in settings.WEEK_TYPES:
-            tasks.append(
-                get_url_data(
-                    f"http://schedule.mslu.by/backend/teachers?teacherId={teacher_id}&weekType={week_type}",
-                    session=session,
-                    week_type=week_type,
-                )
+    for week_type in WEEK_TYPES:
+        tasks.append(
+            get_schedule_with_dates(
+                f"http://schedule.mslu.by/backend/teachers?teacherId={teacher_id}&weekType={week_type}",
+                session=session,
+                week_type=week_type,
             )
+        )
 
-        results: list = await asyncio.gather(*tasks, return_exceptions=True)
+    results: list = await asyncio.gather(*tasks, return_exceptions=True)
 
     lessons = cast(list[dict[str, Any]], list(chain(*results)))
     calendar = Calendar()

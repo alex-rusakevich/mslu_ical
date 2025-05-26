@@ -5,7 +5,7 @@ from fake_useragent import UserAgent
 ua = UserAgent()
 
 
-async def get_url_data(url, session, week_type: str):
+async def get_schedule_with_dates(url, session, week_type: str):
     r = await session.request("GET", url=f"{url}", headers={"User-Agent": ua.random})
 
     data = await r.json()
