@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "mslu-ical"
+version = "1.0.0"
+description = "API which converts MSLU Calendar API to .ical"
+authors = ["Alexander Rusakevich"]
+license = "GPLv3"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+ical = "^9.2.4"
+fastapi = {extras = ["standard"], version = "^0.115.12"}
+aiohttp = "^3.12.0"
+uvicorn = "^0.34.2"
+jinja2 = "^3.1.6"
+fake-useragent = "^2.2.0"
+pytz = "^2025.2"
+a2wsgi = "^1.10.8"
+pydantic-settings = "^2.9.1"
+toml = "^0.10.2"
+
+[tool.poetry.group.dev.dependencies]
+poethepoet = "^0.34.0"
+
+[tool.poe.tasks]
+serve = "uvicorn src.main:app --port 8080"
+dev = "uvicorn src.main:app --reload --port 8080"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,1 +1,0 @@
-web: uvicorn mslu_ical:app --host=0.0.0.0 --port=${PORT}
