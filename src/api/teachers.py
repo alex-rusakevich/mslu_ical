@@ -20,7 +20,7 @@ from src.utils.fake_ua_client import get_http_session
 from src.utils.key_builder import ignore_session_key_builder
 from src.utils.schedules import get_schedule_with_dates, ua
 
-logger = getLogger("uvicorn.error")
+logger = getLogger("app")
 router = APIRouter()
 
 

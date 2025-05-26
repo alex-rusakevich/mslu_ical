@@ -19,11 +19,11 @@ from src.utils.fake_ua_client import get_http_session
 from src.utils.key_builder import ignore_session_key_builder
 from src.utils.schedules import get_schedule_with_dates, ua
 
-logger = getLogger("uvicorn.error")
+logger = getLogger("app")
 router = APIRouter()
 
 
-@router.get("/{faculty_id}/{education_form}/")
+@router.get("/{faculty_id}/{education_form_id}/")
 @cache(key_builder=ignore_session_key_builder)
 async def get_groups_list(faculty_id: Faculties, education_form_id: EducationForms, session = Depends(get_http_session)):
     """Get list of groups by their faculty and education form
@@ -33,7 +33,7 @@ async def get_groups_list(faculty_id: Faculties, education_form_id: EducationFor
     """
 
     query = f"http://schedule.mslu.by/backend/buttonClicked?facultyId={faculty_id}&educationForm={education_form_id}"
-    logger.debug(query)
+    logger.debug("Fetching " + query)
 
     async with session.get(query, headers={"User-Agent": ua.random}) as resp:
         status_code = resp.status

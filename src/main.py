@@ -7,6 +7,7 @@ from fastapi_cache.backends.redis import RedisBackend
 from redis import asyncio as aioredis
 
 from src.api.endpoints import router
+from src.config.logging import setup_logging
 from src.config.settings import settings
 from src.utils.project_version import get_project_version
 
@@ -18,6 +19,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     yield
 
 
+setup_logging()
 app = FastAPI(
     title="MSLU ICal",
     description="MSLU ICal API documentation",

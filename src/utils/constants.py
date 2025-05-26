@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import IntEnum
 
 
-class Faculties(Enum):
+class Faculties(IntEnum):
     CHINESE = 221
     ENGLISH = 202
     GERMAN = 196
@@ -11,7 +11,7 @@ class Faculties(Enum):
     MASTERS = 217
 
 
-class EducationForms(Enum):
+class EducationForms(IntEnum):
     FULL_TIME = 1
     PART_TIME = 2
 
