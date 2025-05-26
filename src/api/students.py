@@ -8,6 +8,7 @@ from typing import Any, Union, cast
 from fastapi import APIRouter, Depends, Response
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
+from fastapi_cache.decorator import cache
 from ical.calendar import Calendar
 from ical.calendar_stream import IcsCalendarStream
 from ical.event import Event
@@ -15,6 +16,7 @@ from pytz import timezone
 
 from src.utils.constants import WEEK_TYPES, EducationForms, Faculties
 from src.utils.fake_ua_client import get_http_session
+from src.utils.key_builder import ignore_session_key_builder
 from src.utils.schedules import get_schedule_with_dates, ua
 
 logger = getLogger("uvicorn.error")
@@ -22,6 +24,7 @@ router = APIRouter()
 
 
 @router.get("/{faculty_id}/{education_form}/")
+@cache(key_builder=ignore_session_key_builder)
 async def get_groups_list(faculty_id: Faculties, education_form_id: EducationForms, session = Depends(get_http_session)):
     """Get list of groups by their faculty and education form
 
@@ -40,6 +43,7 @@ async def get_groups_list(faculty_id: Faculties, education_form_id: EducationFor
 
 
 @router.get("/{group_id}/uni_lessons.ics")
+@cache(key_builder=ignore_session_key_builder)
 async def get_ical_for_group(group_id: int, title_prefix: Union[str, None] = None, session = Depends(get_http_session)):
     """Get schedule for a group by its ID
     
