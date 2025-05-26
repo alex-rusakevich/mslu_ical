@@ -28,7 +28,7 @@ app = FastAPI(
 )
 app.include_router(router, prefix="/api")
 
-@app.get("/")
+@app.get("/", include_in_schema=False)
 async def root():
     return {
         "message": "Welcome to the API",
